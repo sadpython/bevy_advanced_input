@@ -65,19 +65,5 @@ pub(crate) fn input_system<InputType: 'static, KeyType: 'static>(
         user_input.process_gamepad(ev_gmp.0, ev_gmp.1.clone());
     }
 
-    match user_input.mouse_lock_state.get() {
-        crate::user_input::MouseLockState::ShouldBeUnlocked => {
-            let window = windows.get_primary_mut().unwrap();
-            window.set_cursor_lock_mode(false);
-            window.set_cursor_visibility(true);
-        }
-        crate::user_input::MouseLockState::ShouldBeLocked => {
-            let window = windows.get_primary_mut().unwrap();
-            window.set_cursor_lock_mode(true);
-            window.set_cursor_visibility(false);
-        }
-        _ => {}
-    }
-
     user_input.update_states();
 }
