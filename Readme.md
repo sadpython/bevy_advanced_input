@@ -19,19 +19,19 @@ enum Bindings {
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 enum MovementInput {
-    forward,
-    right,
-    up,
+    Forward,
+    Right,
+    Up,
 }
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 enum CameraInput {
-    yaw,
-    pitch,
+    Yaw,
+    Pitch,
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 enum HotkeysInput {
-    test,
+    Test,
 }
 ```
 
@@ -39,14 +39,14 @@ enum HotkeysInput {
 ```rust
 let mut set = UserInputSet::new()
 
-set.begin_key(Bindings::Hotkeys(HotkeysInput::test))
+set.begin_key(Bindings::Hotkeys(HotkeysInput::Test))
     .add(&[
         InputAxisType::KeyboardButton(KeyCode::Q),
         InputAxisType::KeyboardButton(KeyCode::W),
     ])
     .enable_repeat_all_for_reactivation();
 
-set.begin_axis(Bindings::Movement(MovementInput::forward))
+set.begin_axis(Bindings::Movement(MovementInput::Forward))
     .add(InputAxisType::KeyboardButton(KeyCode::W), Some(1.0))
     .add(InputAxisType::KeyboardButton(KeyCode::S), Some(-1.0))
     .add(
@@ -76,13 +76,10 @@ fn process_player_input(
 ) {
     query.for_each_mut(|input_component| {
         if let Some(input_handle) = input_bindings.to_handle(input_component) {
-            if let Some(value) = input_handle.get_axis_value(Bindings::Movement(MovementInput::right))
+            if let Some(value) = input_handle.get_axis_value(Bindings::Movement(MovementInput::Forward))
             {}
 
-            if let Some(value) = input_handle.get_axis_value(Bindings::Camera(CameraInput::yaw)) 
-            {}
-
-            if let Some(value) = input_handle.get_key_state(Bindings::Hotkeys(HotkeysInput::test)) 
+            if let Some(value) = input_handle.get_key_state(Bindings::Hotkeys(HotkeysInput::Test))
             {}
         }
     });

@@ -22,19 +22,19 @@ enum Bindings {
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy)] //* Step 2.1: And create enums for all of these situations
 enum MovementInput {
-    forward,
-    right,
-    up,
+    Forward,
+    Right,
+    Up,
 }
 #[derive(PartialEq, Eq, Hash, Clone, Copy)] //* Step 2.2: More enums
 enum CameraInput {
-    yaw,
-    pitch,
+    Yaw,
+    Pitch,
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy)] //* Step2.3: And even more enums
 enum HotkeysInput {
-    test,
+    Test,
 }
 
 #[derive(Debug)]
@@ -88,21 +88,21 @@ fn process_player_input(
             //* And finally - we can switch input type for out input component input_bindings.swich_input(component, type)
             //* If you need mouse position or delta(last frame) call input_bindings.get_mouse_postion() or input_bindings.get_mouse_delta()
             if let Some(value) =
-                input_handle.get_axis_value(Bindings::Movement(MovementInput::right))
+                input_handle.get_axis_value(Bindings::Movement(MovementInput::Right))
             {}
-            if let Some(value) = input_handle.get_axis_value(Bindings::Movement(MovementInput::up))
+            if let Some(value) = input_handle.get_axis_value(Bindings::Movement(MovementInput::Up))
             {
             }
 
             if let Some(value) =
-                input_handle.get_axis_value(Bindings::Movement(MovementInput::forward))
+                input_handle.get_axis_value(Bindings::Movement(MovementInput::Forward))
             {
             }
 
-            if let Some(value) = input_handle.get_axis_value(Bindings::Camera(CameraInput::yaw)) {}
-            if let Some(value) = input_handle.get_axis_value(Bindings::Camera(CameraInput::pitch)) {
+            if let Some(value) = input_handle.get_axis_value(Bindings::Camera(CameraInput::Yaw)) {}
+            if let Some(value) = input_handle.get_axis_value(Bindings::Camera(CameraInput::Pitch)) {
             }
-            if let Some(value) = input_handle.get_key_state(Bindings::Hotkeys(HotkeysInput::test)) {
+            if let Some(value) = input_handle.get_key_state(Bindings::Hotkeys(HotkeysInput::Test)) {
             }
         }
     });
@@ -114,7 +114,7 @@ fn setup_input(mut input_bindings: ResMut<UserInputHandle<InputType, Bindings>>)
     //* And then bind your bindings enum to keys, you could use from 1 to n keys in keyset
     //* Optionally - call enable_repeat_all_for_reactivation(), so you need release all of pressed keys and press it again for toggle binding
     //* Keys provide "Pressed", "Released" or None state if not changed last tick
-    set.begin_key(Bindings::Hotkeys(HotkeysInput::test))
+    set.begin_key(Bindings::Hotkeys(HotkeysInput::Test))
         .add(&[
             InputAxisType::KeyboardButton(KeyCode::Q),
             InputAxisType::KeyboardButton(KeyCode::W),
@@ -127,7 +127,7 @@ fn setup_input(mut input_bindings: ResMut<UserInputHandle<InputType, Bindings>>)
     //* axis_value(default equal 1, but could be overwrited by input like GamepadAxis, which provide values from -1.0 to 1.0)
     //* default_value(default equal 1, but could be overwited by default_value when add binding)
     //* Final axis value is axis_value * default_value
-    set.begin_axis(Bindings::Movement(MovementInput::forward))
+    set.begin_axis(Bindings::Movement(MovementInput::Forward))
         .add(InputAxisType::KeyboardButton(KeyCode::W), Some(1.0))
         .add(InputAxisType::KeyboardButton(KeyCode::S), Some(-1.0))
         .add(
@@ -135,7 +135,7 @@ fn setup_input(mut input_bindings: ResMut<UserInputHandle<InputType, Bindings>>)
             None,
         );
 
-    set.begin_axis(Bindings::Movement(MovementInput::right))
+    set.begin_axis(Bindings::Movement(MovementInput::Right))
         .add(InputAxisType::KeyboardButton(KeyCode::A), Some(-1.0))
         .add(InputAxisType::KeyboardButton(KeyCode::D), Some(1.0))
         .add(
@@ -143,7 +143,7 @@ fn setup_input(mut input_bindings: ResMut<UserInputHandle<InputType, Bindings>>)
             None,
         );
 
-    set.begin_axis(Bindings::Movement(MovementInput::up))
+    set.begin_axis(Bindings::Movement(MovementInput::Up))
         .add(InputAxisType::KeyboardButton(KeyCode::Q), Some(-1.0))
         .add(InputAxisType::KeyboardButton(KeyCode::E), Some(1.0))
         .add(
@@ -155,14 +155,14 @@ fn setup_input(mut input_bindings: ResMut<UserInputHandle<InputType, Bindings>>)
             Some(-1.0),
         );
 
-    set.begin_axis(Bindings::Camera(CameraInput::yaw))
+    set.begin_axis(Bindings::Camera(CameraInput::Yaw))
         .add(InputAxisType::MouseAxisDiff(MouseAxisType::X), None)
         .add(
             InputAxisType::GamepadAxis(GamepadAxisType::RightStickX),
             None,
         );
 
-    set.begin_axis(Bindings::Camera(CameraInput::pitch))
+    set.begin_axis(Bindings::Camera(CameraInput::Pitch))
         .add(InputAxisType::MouseAxisDiff(MouseAxisType::Y), None)
         .add(
             InputAxisType::GamepadAxis(GamepadAxisType::RightStickY),
