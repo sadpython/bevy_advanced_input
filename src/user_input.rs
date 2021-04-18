@@ -434,6 +434,15 @@ pub enum InputSource {
     Mouse,
     Gamepad,
 }
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum MouseLockState {
+    Unlocked,
+    ShouldBeUnlocked,
+    Locked,
+    ShouldBeLocked,
+}
 pub struct UserInputHandle<InputType, BindingType>
 where
     InputType: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
@@ -443,6 +452,7 @@ where
     mouse_delta: Option<Vec2>,
     mouse_moved_this_tick: bool,
     mouse_wheel_moved_this_tick: bool,
+    pub(crate) mouse_lock_state: MouseLockState,
     input_id_to_inputset: HashMap<u8, UserInputSet<BindingType>>,
     input_id_to_input_type: HashMap<u8, InputType>,
     available_sets: HashMap<InputType, UserInputSet<BindingType>>,
@@ -470,6 +480,7 @@ where
             mouse_delta: None,
             mouse_moved_this_tick: false,
             mouse_wheel_moved_this_tick: false,
+            mouse_lock_state: MouseLockState::Unlocked,
             input_id_to_inputset: HashMap::default(),
             input_id_to_input_type: HashMap::default(),
             available_sets: HashMap::default(),
@@ -717,6 +728,16 @@ where
         for (_, player_set) in self.input_id_to_inputset.iter_mut() {
             player_set.update_states();
         }
+        match self.mouse_lock_state {
+            MouseLockState::Unlocked => {}
+            MouseLockState::ShouldBeUnlocked => {
+                self.mouse_lock_state = MouseLockState::Unlocked;
+            }
+            MouseLockState::Locked => {}
+            MouseLockState::ShouldBeLocked => {
+                self.mouse_lock_state = MouseLockState::Locked;
+            }
+        }
     }
 
     pub(crate) fn finish_processing(&mut self) {
@@ -813,6 +834,18 @@ where
     #[allow(dead_code)]
     pub fn get_mouse_delta(&self) -> Option<Vec2> {
         self.mouse_delta
+    }
+
+    pub fn lock_mouse(&mut self) {
+        if self.mouse_lock_state != MouseLockState::Locked {
+            self.mouse_lock_state = MouseLockState::ShouldBeLocked;
+        }
+    }
+
+    pub fn unlock_mouse(&mut self) {
+        if self.mouse_lock_state != MouseLockState::Unlocked {
+            self.mouse_lock_state = MouseLockState::ShouldBeUnlocked;
+        }
     }
 }
 

@@ -7,7 +7,7 @@ use bevy::{
     },
     math::Vec2,
     prelude::{EventReader, GamepadEvent, ResMut},
-    window::CursorMoved,
+    window::{CursorMoved, Windows},
 };
 
 use super::user_input::UserInputHandle;
@@ -27,6 +27,7 @@ pub(crate) fn input_system<InputType: 'static, KeyType: 'static>(
 
     mut evr_gamepad: EventReader<GamepadEvent>,
     mut user_input: ResMut<UserInputHandle<InputType, KeyType>>,
+    mut windows: ResMut<Windows>,
 ) where
     InputType: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
     KeyType: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
@@ -62,6 +63,20 @@ pub(crate) fn input_system<InputType: 'static, KeyType: 'static>(
     //Gamepad input
     for ev_gmp in evr_gamepad.iter() {
         user_input.process_gamepad(ev_gmp.0, ev_gmp.1.clone());
+    }
+
+    match user_input.mouse_lock_state {
+        crate::user_input::MouseLockState::ShouldBeUnlocked => {
+            let window = windows.get_primary_mut().unwrap();
+            window.set_cursor_lock_mode(false);
+            window.set_cursor_visibility(true);
+        }
+        crate::user_input::MouseLockState::ShouldBeLocked => {
+            let window = windows.get_primary_mut().unwrap();
+            window.set_cursor_lock_mode(true);
+            window.set_cursor_visibility(false);
+        }
+        _ => {}
     }
 
     user_input.update_states();

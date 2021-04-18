@@ -111,6 +111,11 @@ Take mouse position and delta
 input_bindings.get_mouse_postion();
 input_bindings.get_mouse_delta();
 ```
+Lock or unlock mouse to window
+```rust
+input_bindings.lock_mouse();
+input_bindings.unlock_mouse();
+```
 Create input handle for InputID, take current input type for InputID
 ```rust
 if let Some(input_handle) = input_bindings.to_handle(input_component){
