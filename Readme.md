@@ -3,22 +3,22 @@ This plugin provide functionality for bindig axises and keysets in bevy.
 
 ### Binding input
 ```rust
-    let mut set = UserInputSet::new()
+let mut set = UserInputSet::new()
 
-    set.begin_key(Bindings::Hotkeys(HotkeysInput::test))
-        .add(&[
-            InputAxisType::KeyboardButton(KeyCode::Q),
-            InputAxisType::KeyboardButton(KeyCode::W),
-        ])
-        .enable_repeat_all_for_reactivation();
+set.begin_key(Bindings::Hotkeys(HotkeysInput::test))
+    .add(&[
+        InputAxisType::KeyboardButton(KeyCode::Q),
+        InputAxisType::KeyboardButton(KeyCode::W),
+    ])
+    .enable_repeat_all_for_reactivation();
 
-    set.begin_axis(Bindings::Movement(MovementInput::forward))
-        .add(InputAxisType::KeyboardButton(KeyCode::W), Some(1.0))
-        .add(InputAxisType::KeyboardButton(KeyCode::S), Some(-1.0))
-        .add(
-            InputAxisType::GamepadAxis(GamepadAxisType::LeftStickY),
-            None,
-        );
+set.begin_axis(Bindings::Movement(MovementInput::forward))
+    .add(InputAxisType::KeyboardButton(KeyCode::W), Some(1.0))
+    .add(InputAxisType::KeyboardButton(KeyCode::S), Some(-1.0))
+    .add(
+        InputAxisType::GamepadAxis(GamepadAxisType::LeftStickY),
+        None,
+    );
 ```
 
 ### Spawn entity with InputID
