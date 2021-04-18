@@ -1,5 +1,4 @@
-use bevy::{prelude::*, render::camera::PerspectiveProjection};
-use bevy::{render::camera::Camera, utils::HashMap};
+use bevy::prelude::*;
 
 use bevy_advanced_input::{
     component::InputID,
