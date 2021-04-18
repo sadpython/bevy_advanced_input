@@ -117,6 +117,7 @@ if let Some(input_handle) = input_bindings.to_handle(input_component){
     let current_input_type = input_handle.get_input_type();
 }
 ```
+Handle multiple gamepads provides by InputID number. First InputID has id equal 0, second equal 1. And first connected gamepad also will have id equal 0, second equal 1.
 
 ### Examples
 See examples/common.rs for more information
