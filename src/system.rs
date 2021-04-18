@@ -64,6 +64,4 @@ pub(crate) fn input_system<InputType: 'static, KeyType: 'static>(
     for ev_gmp in evr_gamepad.iter() {
         user_input.process_gamepad(ev_gmp.0, ev_gmp.1.clone());
     }
-
-    user_input.update_states();
 }

@@ -1,4 +1,4 @@
-use std::{cell::Cell, collections::hash_map::Entry, hash::Hash};
+use std::{collections::hash_map::Entry, hash::Hash};
 
 use bevy::{
     input::ElementState,
@@ -21,7 +21,7 @@ pub enum InputState {
     Pressed,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct InputKeyset {
     pub(crate) state: InputState,
     pub(crate) activated_keys_num: usize,
@@ -90,42 +90,26 @@ impl Default for InputKeyset {
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum MouseAxisType {
     X,
     Y,
     Wheel,
 }
 
-// #[derive(PartialEq, Eq, Hash, Clone, Copy)]
-// #[allow(dead_code)]
-// pub enum TouchAxisType {
-//     X,
-//     Y,
-// }
-
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
-#[allow(dead_code)]
-pub enum TouchGesture {
-    PositionDiff,
-    AngleDiff,
-}
-#[derive(PartialEq, Eq, Hash, Clone)]
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
 #[allow(dead_code)]
 pub enum InputAxisType {
     KeyboardButton(KeyCode),
     MouseButton(MouseButton),
     GamepadButton(GamepadButtonType),
-    //TouchFinger(u8),
-    //TouchAxis(TouchAxisType),
-    //TouchAxisDiff(TouchAxisType),
     MouseAxis(MouseAxisType),
     MouseAxisDiff(MouseAxisType),
     GamepadAxis(GamepadAxisType),
     GamepadAxisDiff(GamepadAxisType),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct InputAxisSet {
     pub(crate) state: InputState,
     pub(crate) axises: HashMap<InputAxisType, Option<f32>>,
@@ -219,9 +203,7 @@ pub struct UserInputSet<Key>
 where
     Key: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
 {
-    key_to_keyset_name: HashMap<InputAxisType, Vec<Key>>,
     name_to_keyset: HashMap<Key, InputKeyset>,
-    key_to_axisset_name: HashMap<InputAxisType, Vec<Key>>,
     name_to_axisset: HashMap<Key, InputAxisSet>,
     last_gamepad_axis_value: HashMap<GamepadAxisType, f32>,
 }
@@ -278,16 +260,14 @@ where
         self
     }
 
-    pub fn enable_repeat_all_for_reactivation(&mut self) {
+    pub fn enable_repeat_all_for_reactivation(&mut self) -> &mut Self {
         self.repeat_all_for_reactivate = true;
+        self
     }
 
     fn finish(&mut self) {
-        self.owner_set.add_keyset(
-            self.name,
-            self.axises.as_slice(),
-            self.repeat_all_for_reactivate,
-        );
+        self.owner_set
+            .add_keyset(self.name, &self.axises, self.repeat_all_for_reactivate);
     }
 }
 
@@ -306,18 +286,16 @@ where
 {
     pub fn new() -> Self {
         Self {
-            key_to_keyset_name: HashMap::default(),
             name_to_keyset: HashMap::default(),
-            key_to_axisset_name: HashMap::default(),
             name_to_axisset: HashMap::default(),
             last_gamepad_axis_value: HashMap::default(),
         }
     }
 
-    pub fn begin_key(&mut self, name: impl Into<Key>) -> KeySetBuilder<Key> {
+    pub fn begin_key(&mut self, name: Key) -> KeySetBuilder<Key> {
         KeySetBuilder {
             axises: Vec::new(),
-            name: name.into(),
+            name: name,
             owner_set: self,
             repeat_all_for_reactivate: false,
         }
@@ -326,43 +304,26 @@ where
     #[allow(dead_code)]
     pub(crate) fn add_keyset(
         &mut self,
-        name: impl Into<Key>,
-        keyset: &[InputAxisType],
+        name: Key,
+        keyset: &Vec<InputAxisType>,
         repeat_all_for_activate: bool,
     ) {
-        let hash_string = name.into();
-        for key in keyset {
-            let key_to_keyset = self.key_to_keyset_name.entry(key.clone()).or_default();
-            key_to_keyset.push(hash_string);
-        }
-        self.name_to_keyset.insert(
-            hash_string,
-            InputKeyset::new(keyset, repeat_all_for_activate),
-        );
+        self.name_to_keyset
+            .insert(name, InputKeyset::new(keyset, repeat_all_for_activate));
     }
 
     #[allow(dead_code)]
-    pub fn begin_axis(&mut self, name: impl Into<Key>) -> AxisSetBuilder<Key> {
+    pub fn begin_axis(&mut self, name: Key) -> AxisSetBuilder<Key> {
         AxisSetBuilder {
             axises: HashMap::default(),
-            name: name.into(),
+            name: name,
             owner_set: self,
         }
     }
 
     #[allow(dead_code)]
-    pub(crate) fn add_axisset(
-        &mut self,
-        name: impl Into<Key>,
-        axises: HashMap<InputAxisType, Option<f32>>,
-    ) {
-        let hash_string = name.into();
-        for (key, _) in axises.iter() {
-            let key_to_keyset = self.key_to_axisset_name.entry(key.clone()).or_default();
-            key_to_keyset.push(hash_string);
-        }
-        self.name_to_axisset
-            .insert(hash_string, InputAxisSet::new(axises));
+    pub(crate) fn add_axisset(&mut self, name: Key, axises: HashMap<InputAxisType, Option<f32>>) {
+        self.name_to_axisset.insert(name, InputAxisSet::new(axises));
     }
 
     pub fn get_axis_value(&self, name: Key) -> Option<f32> {
@@ -384,13 +345,13 @@ where
         None
     }
 
-    pub fn change_key_state(&mut self, key_type: InputAxisType, state: ElementState) {
+    pub(crate) fn change_key_state(&mut self, key_type: InputAxisType, state: ElementState) {
         for (_, keyset) in self.name_to_keyset.iter_mut() {
             keyset.update_key_state(key_type.clone(), state);
         }
     }
 
-    pub fn change_axis_state(
+    pub(crate) fn change_axis_state(
         &mut self,
         axis_type: InputAxisType,
         state: ElementState,
@@ -401,7 +362,7 @@ where
         }
     }
 
-    pub fn update_states(&mut self) {
+    pub(crate) fn update_states(&mut self) {
         for (_, keyset) in self.name_to_keyset.iter_mut() {
             keyset.update_state();
         }
@@ -714,13 +675,14 @@ where
         *map = input_set;
     }
 
-    pub(crate) fn update_states(&mut self) {
+    fn update_states(&mut self) {
         for (_, player_set) in self.input_id_to_inputset.iter_mut() {
             player_set.update_states();
         }
     }
 
     pub(crate) fn finish_processing(&mut self) {
+        self.update_states();
         for (_, player_set) in self.input_id_to_inputset.iter_mut() {
             if !self.mouse_moved_this_tick {
                 player_set.change_axis_state(
