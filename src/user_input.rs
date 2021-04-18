@@ -439,6 +439,8 @@ where
     InputType: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
     BindingType: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
 {
+    mouse_position: Option<Vec2>,
+    mouse_delta: Option<Vec2>,
     mouse_moved_this_tick: bool,
     mouse_wheel_moved_this_tick: bool,
     input_id_to_inputset: HashMap<u8, UserInputSet<BindingType>>,
@@ -464,6 +466,8 @@ where
 {
     pub fn new() -> Self {
         Self {
+            mouse_position: None,
+            mouse_delta: None,
             mouse_moved_this_tick: false,
             mouse_wheel_moved_this_tick: false,
             input_id_to_inputset: HashMap::default(),
@@ -502,6 +506,9 @@ where
                 Some(delta_position.y),
             );
         }
+
+        self.mouse_position = Some(current_position);
+        self.mouse_delta = Some(delta_position);
 
         self.mouse_moved_this_tick = true;
         self.last_input_source = Some(InputSource::Mouse);
@@ -761,6 +768,8 @@ where
         self.mouse_moved_this_tick = false;
 
         self.mouse_wheel_moved_this_tick = false;
+
+        self.mouse_delta = None;
     }
 
     pub fn to_handle(
@@ -794,6 +803,16 @@ where
     #[allow(dead_code)]
     pub fn get_input_source(&self) -> Option<InputSource> {
         self.last_input_source
+    }
+
+    #[allow(dead_code)]
+    pub fn get_mouse_postion(&self) -> Option<Vec2> {
+        self.mouse_position
+    }
+
+    #[allow(dead_code)]
+    pub fn get_mouse_delta(&self) -> Option<Vec2> {
+        self.mouse_position
     }
 }
 

@@ -86,6 +86,7 @@ fn process_player_input(
             //* Now we can call input_handle.get_axis_value() or input_handle.get_key_state() for track bindigs, see examples below
             //* Also, we can get current InputType from input_handle.get_input_type function, because we can!
             //* And finally - we can switch input type for out input component input_bindings.swich_input(component, type)
+            //* If you need mouse position or delta(last frame) call input_bindings.get_mouse_postion() or input_bindings.get_mouse_delta()
             if let Some(value) =
                 input_handle.get_axis_value(Bindings::Movement(MovementInput::right))
             {}
