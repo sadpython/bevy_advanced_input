@@ -1,6 +1,40 @@
 # Bevy advanced inputs
 This plugin provide functionality for bindig axises and keysets in bevy.
 
+### Create input types and bindings
+```rust
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum InputType {
+    Editor,
+    MainMenu,
+    Game,
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum Bindings {
+    Hotkeys(HotkeysInput),
+    Movement(MovementInput),
+    Camera(CameraInput),
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum MovementInput {
+    forward,
+    right,
+    up,
+}
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum CameraInput {
+    yaw,
+    pitch,
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum HotkeysInput {
+    test,
+}
+```
+
 ### Binding input
 ```rust
 let mut set = UserInputSet::new()
