@@ -11,7 +11,7 @@ use bevy::{
 
 use crate::common::InsertOrGet;
 
-use super::component::InputID;
+use super::input_id::InputID;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum InputState {
@@ -628,7 +628,7 @@ where
     // }
 
     #[allow(dead_code)]
-    pub fn process_gamepad(&mut self, gamepad: Gamepad, event: GamepadEventType) {
+    pub(crate) fn process_gamepad(&mut self, gamepad: Gamepad, event: GamepadEventType) {
         //TODO: Write connection logic
         match event {
             GamepadEventType::Connected => {}
@@ -713,13 +713,13 @@ where
         *map = input_set;
     }
 
-    pub fn update_states(&mut self) {
+    pub(crate) fn update_states(&mut self) {
         for (_, player_set) in self.input_id_to_inputset.iter_mut() {
             player_set.update_states();
         }
     }
 
-    pub fn finish_processing(&mut self) {
+    pub(crate) fn finish_processing(&mut self) {
         for (_, player_set) in self.input_id_to_inputset.iter_mut() {
             if !self.mouse_moved_this_tick {
                 player_set.change_axis_state(

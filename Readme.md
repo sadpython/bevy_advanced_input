@@ -74,8 +74,6 @@ fn process_player_input(
     input_bindings: Res<UserInputHandle<InputType, Bindings>>,
     query: Query<&InputID>,
 ) {
-    //* If need to track last input type - use input_bindings.get_input_source()
-    //* It could be Keyboard, Mouse or Gamepad now, and could be used for game widgets, when you want to add button icon to it
     query.for_each_mut(|input_component| {
         if let Some(input_handle) = input_bindings.to_handle(input_component) {
             if let Some(value) = input_handle.get_axis_value(Bindings::Movement(MovementInput::right))
@@ -90,6 +88,36 @@ fn process_player_input(
     });
 }
 ```
+
+### Other Functions
+Create new input id for handle it from input_bindings
+```rust
+input_bindings.create_input_id(InputType::Editor)
+```
+Switch to new input bindings set for InputID
+```rust
+input_bindings.switch_input(&component, InputType::Editor);
+```
+Remove unused input from input_bindings
+```rust
+input_bindings.stop_input_tracking(&component);
+```
+Take current input source(Mouse, Keyboard, Gamepad). Could be used for game widgets, when you want to add button icon to it
+```rust
+input_bindings.get_input_source()
+```
+Take mouse position and delta
+```rust
+input_bindings.get_mouse_postion();
+input_bindings.get_mouse_delta();
+```
+Create input handle for InputID, take current input type for InputID
+```rust
+if let Some(input_handle) = input_bindings.to_handle(input_component){
+    let current_input_type = input_handle.get_input_type();
+}
+```
+
 ### Examples
 See examples/common.rs for more information
 

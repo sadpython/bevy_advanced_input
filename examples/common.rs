@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use bevy_advanced_input::{
-    component::InputID,
+    input_id::InputID,
     plugin::InputBindingPlugin,
     user_input::{InputAxisType, MouseAxisType, UserInputHandle, UserInputSet},
 };
