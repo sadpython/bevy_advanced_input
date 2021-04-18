@@ -1,0 +1,19 @@
+[package]
+name = "bevy_advanced_input"
+version = "0.1.0"
+authors = ["sadpython"]
+edition = "2018"
+exclude = [".vscode/**"]
+description = "Advanced axis and keyset input in Bevy"
+license = "MIT"
+repository = "https://github.com/sadpython/bevy_advanced_input"
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = { version = "0.5.0" }
+
+[[example]]
+name = "common"
+path = "examples/common.rs"
