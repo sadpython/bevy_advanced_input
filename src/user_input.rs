@@ -812,7 +812,7 @@ where
 
     #[allow(dead_code)]
     pub fn get_mouse_delta(&self) -> Option<Vec2> {
-        self.mouse_position
+        self.mouse_delta
     }
 }
 
