@@ -7,7 +7,7 @@ use bevy::{
     },
     math::Vec2,
     prelude::{EventReader, GamepadEvent, ResMut},
-    window::{CursorMoved, Windows},
+    window::CursorMoved,
 };
 
 use super::user_input::UserInputHandle;
@@ -27,7 +27,6 @@ pub(crate) fn input_system<InputType: 'static, KeyType: 'static>(
 
     mut evr_gamepad: EventReader<GamepadEvent>,
     mut user_input: ResMut<UserInputHandle<InputType, KeyType>>,
-    mut windows: ResMut<Windows>,
 ) where
     InputType: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
     KeyType: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
