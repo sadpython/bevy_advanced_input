@@ -132,4 +132,4 @@ See examples/common.rs for more information
 
 ### Limitations
 Currently, plugin didn't support touch inputs, because posssibly it should have gestures processor and algorythm for simply generate gesture and handle it.
-Also, gamepad values now filtered by abs(value) > 0.1, because bevy couldn't load and write settings to config right now with stable api
+Also, gamepad values now filtered by abs(value) > 0.1
