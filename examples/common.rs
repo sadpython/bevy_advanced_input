@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
 use bevy_advanced_input::{
-    input_id::InputID,
+    config::InputConfig,
+    input_id::InputId,
     plugin::InputBindingPlugin,
     user_input::{InputAxisType, MouseAxisType, UserInputHandle, UserInputSet},
 };
@@ -44,8 +45,10 @@ struct Player {} //* Step 3: Just player placeholder, you could skip this
 struct PlayerBundle {
     //* Step 3.1: Player bundle also optional, you need only InputComponent on your entity
     player: Player,
-    input_id: InputID,
+    input_id: InputId,
 }
+//* Step 3.2: Create player config struct with your bindings
+struct MyInputConfig(InputConfig<Bindings>);
 
 fn main() {
     App::build()
@@ -76,7 +79,7 @@ fn spawn_player(
 
 fn process_player_input(
     input_bindings: Res<UserInputHandle<InputType, Bindings>>,
-    query: Query<&InputID>,
+    query: Query<&InputId>,
 ) {
     //* If need to track last input type - use input_bindings.get_input_source()
     //* It could be Keyboard, Mouse or Gamepad now, and could be used for game widgets, when you want to add button icon to it
@@ -109,6 +112,23 @@ fn process_player_input(
 }
 
 fn setup_input(mut input_bindings: ResMut<UserInputHandle<InputType, Bindings>>) {
+    //* If you didn't have a config loader, you could setup it right now
+    let mut config: InputConfig<Bindings> = InputConfig::new();
+    //* Rebind default axis value
+    config.rebind_default_value(InputAxisType::KeyboardButton(KeyCode::S), -1.0);
+    config.rebind_default_value(InputAxisType::KeyboardButton(KeyCode::A), -1.0);
+    config.rebind_default_value(InputAxisType::KeyboardButton(KeyCode::Q), -1.0);
+    config.rebind_default_value(
+        InputAxisType::GamepadButton(GamepadButtonType::LeftTrigger2),
+        -1.0,
+    );
+
+    //* Or just swap axises
+    config.rebind_axis(
+        InputAxisType::KeyboardButton(KeyCode::Key0),
+        InputAxisType::KeyboardButton(KeyCode::Key1),
+    );
+
     let mut set = UserInputSet::new(); //* Create InputSet at first
 
     //* And then bind your bindings enum to keys, you could use from 1 to n keys in keyset
@@ -121,54 +141,39 @@ fn setup_input(mut input_bindings: ResMut<UserInputHandle<InputType, Bindings>>)
         ])
         .enable_repeat_all_for_reactivation();
 
-    //* Or bind your bindings enum to axis, common way to binding your inputs
-    //* Axis provide a float value of last pressed button or axis, or None if not pressed
-    //* Axis result value calculate from:
-    //* axis_value(default equal 1, but could be overwrited by input like GamepadAxis, which provide values from -1.0 to 1.0)
-    //* default_value(default equal 1, but could be overwited by default_value when add binding)
-    //* Final axis value is axis_value * default_value
+    //* Or bind your bindings enum to axis
     set.begin_axis(Bindings::Movement(MovementInput::Forward))
-        .add(InputAxisType::KeyboardButton(KeyCode::W), Some(1.0))
-        .add(InputAxisType::KeyboardButton(KeyCode::S), Some(-1.0))
-        .add(
-            InputAxisType::GamepadAxis(GamepadAxisType::LeftStickY),
-            None,
-        );
+        .add(InputAxisType::KeyboardButton(KeyCode::W))
+        .add(InputAxisType::KeyboardButton(KeyCode::S))
+        .add(InputAxisType::GamepadAxis(GamepadAxisType::LeftStickY));
 
     set.begin_axis(Bindings::Movement(MovementInput::Right))
-        .add(InputAxisType::KeyboardButton(KeyCode::A), Some(-1.0))
-        .add(InputAxisType::KeyboardButton(KeyCode::D), Some(1.0))
-        .add(
-            InputAxisType::GamepadAxis(GamepadAxisType::LeftStickX),
-            None,
-        );
+        .add(InputAxisType::KeyboardButton(KeyCode::A))
+        .add(InputAxisType::KeyboardButton(KeyCode::D))
+        .add(InputAxisType::GamepadAxis(GamepadAxisType::LeftStickX));
 
     set.begin_axis(Bindings::Movement(MovementInput::Up))
-        .add(InputAxisType::KeyboardButton(KeyCode::Q), Some(-1.0))
-        .add(InputAxisType::KeyboardButton(KeyCode::E), Some(1.0))
-        .add(
-            InputAxisType::GamepadButton(GamepadButtonType::RightTrigger2),
-            None,
-        )
-        .add(
-            InputAxisType::GamepadButton(GamepadButtonType::LeftTrigger2),
-            Some(-1.0),
-        );
+        .add(InputAxisType::KeyboardButton(KeyCode::Q))
+        .add(InputAxisType::KeyboardButton(KeyCode::E))
+        .add(InputAxisType::GamepadButton(
+            GamepadButtonType::RightTrigger2,
+        ))
+        .add(InputAxisType::GamepadButton(
+            GamepadButtonType::LeftTrigger2,
+        ));
 
     set.begin_axis(Bindings::Camera(CameraInput::Yaw))
-        .add(InputAxisType::MouseAxisDiff(MouseAxisType::X), None)
-        .add(
-            InputAxisType::GamepadAxis(GamepadAxisType::RightStickX),
-            None,
-        );
+        .add(InputAxisType::MouseAxisDiff(MouseAxisType::X))
+        .add(InputAxisType::GamepadAxis(GamepadAxisType::RightStickX));
 
     set.begin_axis(Bindings::Camera(CameraInput::Pitch))
-        .add(InputAxisType::MouseAxisDiff(MouseAxisType::Y), None)
-        .add(
-            InputAxisType::GamepadAxis(GamepadAxisType::RightStickY),
-            None,
-        );
+        .add(InputAxisType::MouseAxisDiff(MouseAxisType::Y))
+        .add(InputAxisType::GamepadAxis(GamepadAxisType::RightStickY));
 
-    //* And last step - add your input set to bindigs with specified game InputType
+    //* Add your input set to bindigs with specified game InputType
     input_bindings.add_input(InputType::Editor, set);
+
+    //* And last step - apply your config. It will be applyed to all of your input sets, and you could apply config many times if you need
+    //* change game settings, for example. Config didn't cached, so
+    input_bindings.apply_config(&config);
 }
