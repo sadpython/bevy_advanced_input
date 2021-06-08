@@ -1,4 +1,8 @@
-use std::{collections::hash_map::Entry, hash::Hash};
+use std::{
+    cell::Ref,
+    collections::hash_map::{Entry, Keys},
+    hash::Hash,
+};
 
 use bevy::{
     input::ElementState,
@@ -6,12 +10,13 @@ use bevy::{
     prelude::{
         Gamepad, GamepadAxisType, GamepadButtonType, GamepadEventType, KeyCode, MouseButton,
     },
-    utils::HashMap,
+    utils::{HashMap, HashSet},
 };
 
-use crate::common::InsertOrGet;
+use crate::{common::InsertOrGet, config::InputConfig};
 
-use super::input_id::InputID;
+use super::input_id::InputId;
+use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum InputState {
@@ -21,25 +26,31 @@ pub enum InputState {
     Pressed,
 }
 
+impl Default for InputState {
+    fn default() -> Self {
+        Self::Released
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct InputKeyset {
     pub(crate) state: InputState,
     pub(crate) activated_keys_num: usize,
     pub(crate) keys_state: HashMap<InputAxisType, ElementState>,
     pub(crate) repeat_all_for_activate: bool,
+    pub(crate) default_keys: Vec<InputAxisType>,
 }
 
 impl InputKeyset {
-    pub fn new(keyset: &[InputAxisType], repeat_all_for_activate: bool) -> Self {
+    pub fn new(keyset: Vec<InputAxisType>, repeat_all_for_activate: bool) -> Self {
         let mut set = Self {
             state: InputState::Released,
             activated_keys_num: 0,
             keys_state: HashMap::default(),
             repeat_all_for_activate,
+            default_keys: keyset,
         };
-        for key in keyset {
-            set.keys_state.insert(key.clone(), ElementState::Released);
-        }
+        set.reset_to_default();
         set
     }
 
@@ -82,22 +93,38 @@ impl InputKeyset {
             InputState::Pressed => {}
         }
     }
+
+    pub(crate) fn reset_to_default(&mut self) {
+        self.keys_state.clear();
+        for key in self.default_keys.iter() {
+            self.keys_state.insert(key.clone(), ElementState::Released);
+        }
+    }
+
+    pub(crate) fn apply_rebind(&mut self, rebind: &HashMap<InputAxisType, InputAxisType>) {
+        for key in self.default_keys.iter() {
+            if let Some(val) = rebind.get(key) {
+                let key_state = self.keys_state.remove(key).unwrap();
+                self.keys_state.insert(val.clone(), key_state);
+            }
+        }
+    }
 }
 
 impl Default for InputKeyset {
     fn default() -> Self {
-        Self::new(&[], false)
+        Self::new(Vec::new(), false)
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum MouseAxisType {
     X,
     Y,
     Wheel,
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Debug, Deserialize, Serialize)]
 #[allow(dead_code)]
 pub enum InputAxisType {
     KeyboardButton(KeyCode),
@@ -109,27 +136,32 @@ pub enum InputAxisType {
     GamepadAxisDiff(GamepadAxisType),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct InputAxisSet {
+    #[serde(skip_serializing, skip_deserializing)]
     pub(crate) state: InputState,
-    pub(crate) axises: HashMap<InputAxisType, Option<f32>>,
+    pub(crate) axises: HashMap<InputAxisType, f32>,
+    #[serde(skip_serializing, skip_deserializing)]
     pub(crate) active_axis_types: Vec<InputAxisType>,
+    #[serde(skip_serializing, skip_deserializing)]
     pub(crate) out_value: Option<f32>,
+    pub(crate) default_axises: HashMap<InputAxisType, f32>,
 }
 
 impl InputAxisSet {
-    pub fn new(axises: HashMap<InputAxisType, Option<f32>>) -> Self {
+    pub fn new(axises: HashMap<InputAxisType, f32>) -> Self {
         Self {
             state: InputState::Released,
-            axises,
+            axises: axises.clone(),
             active_axis_types: Vec::new(),
             out_value: None,
+            default_axises: axises,
         }
     }
-    #[allow(dead_code)]
-    pub fn add_axis(&mut self, axis_type: InputAxisType, axis_value: Option<f32>) {
-        self.axises.insert(axis_type, axis_value);
-    }
+    // #[allow(dead_code)]
+    // pub fn add_axis(&mut self, axis_type: InputAxisType, axis_value: Option<f32>) {
+    //     self.axises.insert(axis_type, axis_value);
+    // }
 
     pub fn update_axis_state(
         &mut self,
@@ -154,7 +186,7 @@ impl InputAxisSet {
                     }
 
                     if should_update_value {
-                        let default_value = entry.get().unwrap_or(1.0);
+                        let default_value = entry.get();
                         let new_value = value.unwrap_or(1.0);
                         self.out_value = Some(default_value * new_value);
                     }
@@ -197,6 +229,27 @@ impl InputAxisSet {
             InputState::Pressed => {}
         }
     }
+
+    pub(crate) fn reset_to_default(&mut self) {
+        self.axises = self.default_axises.clone();
+        self.active_axis_types = Vec::new();
+        self.state = InputState::Released;
+        self.out_value = None;
+    }
+
+    pub(crate) fn apply_rebind(&mut self, rebind: &HashMap<InputAxisType, InputAxisType>) {
+        for (key, value) in self.default_axises.iter() {
+            if let Some(val) = rebind.get(key) {
+                let axis_default_value = self.axises.remove(key).unwrap();
+                self.axises.insert(val.clone(), axis_default_value);
+            }
+        }
+    }
+
+    pub(crate) fn get_axises(&self) -> Keys<InputAxisType, f32> {
+        self.default_axises.keys()
+    }
+    pub(crate) fn apply_new_defaults(&mut self, new_defaults: HashMap<InputAxisType, f32>) {}
 }
 #[derive(Clone)]
 pub struct UserInputSet<Key>
@@ -212,7 +265,7 @@ pub struct AxisSetBuilder<'a, Key>
 where
     Key: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
 {
-    axises: HashMap<InputAxisType, Option<f32>>,
+    axises: HashSet<InputAxisType>,
     name: Key,
     owner_set: &'a mut UserInputSet<Key>,
 }
@@ -221,8 +274,8 @@ impl<'a, Key> AxisSetBuilder<'a, Key>
 where
     Key: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
 {
-    pub fn add(&mut self, axis_type: InputAxisType, default_value: Option<f32>) -> &mut Self {
-        self.axises.insert(axis_type, default_value);
+    pub fn add(&mut self, axis_type: InputAxisType) -> &mut Self {
+        self.axises.insert(axis_type);
         self
     }
 
@@ -266,8 +319,11 @@ where
     }
 
     fn finish(&mut self) {
-        self.owner_set
-            .add_keyset(self.name, &self.axises, self.repeat_all_for_reactivate);
+        self.owner_set.add_keyset(
+            self.name,
+            self.axises.clone(),
+            self.repeat_all_for_reactivate,
+        );
     }
 }
 
@@ -305,7 +361,7 @@ where
     pub(crate) fn add_keyset(
         &mut self,
         name: Key,
-        keyset: &Vec<InputAxisType>,
+        keyset: Vec<InputAxisType>,
         repeat_all_for_activate: bool,
     ) {
         self.name_to_keyset
@@ -315,15 +371,19 @@ where
     #[allow(dead_code)]
     pub fn begin_axis(&mut self, name: Key) -> AxisSetBuilder<Key> {
         AxisSetBuilder {
-            axises: HashMap::default(),
+            axises: HashSet::default(),
             name: name,
             owner_set: self,
         }
     }
 
     #[allow(dead_code)]
-    pub(crate) fn add_axisset(&mut self, name: Key, axises: HashMap<InputAxisType, Option<f32>>) {
-        self.name_to_axisset.insert(name, InputAxisSet::new(axises));
+    pub(crate) fn add_axisset(&mut self, name: Key, axises: HashSet<InputAxisType>) {
+        let mut map = HashMap::default();
+        for axis in axises.iter() {
+            map.insert(axis.clone(), 1.0);
+        }
+        self.name_to_axisset.insert(name, InputAxisSet::new(map));
     }
 
     pub fn get_axis_value(&self, name: Key) -> Option<f32> {
@@ -370,6 +430,20 @@ where
             axisset.update_state();
         }
     }
+    pub(crate) fn apply_config(&mut self, config: &InputConfig<Key>) {
+        for (_, keyset) in self.name_to_keyset.iter_mut() {
+            keyset.reset_to_default();
+            keyset.apply_rebind(&config.convert_pressed_key_to);
+        }
+        for (_, axisset) in self.name_to_axisset.iter_mut() {
+            axisset.reset_to_default();
+            axisset.apply_rebind(&config.convert_pressed_key_to);
+
+            for (key, value) in axisset.axises.iter_mut() {
+                *value = config.get_default_value(key);
+            }
+        }
+    }
 }
 
 impl<Key> Default for UserInputSet<Key>
@@ -409,6 +483,7 @@ where
     input_id_to_input_type: HashMap<u8, InputType>,
     available_sets: HashMap<InputType, UserInputSet<BindingType>>,
     last_input_source: Option<InputSource>,
+    config: InputConfig<BindingType>,
 }
 
 impl<InputType, BindingType> Default for UserInputHandle<InputType, BindingType>
@@ -436,6 +511,7 @@ where
             input_id_to_input_type: HashMap::default(),
             available_sets: HashMap::default(),
             last_input_source: None,
+            config: InputConfig::new(),
         }
     }
     pub(crate) fn process_keyboard_key(&mut self, key: KeyCode, new_state: ElementState) {
@@ -653,7 +729,7 @@ where
     }
 
     #[allow(dead_code)]
-    pub fn switch_input(&mut self, component: &'_ InputID, input_type: InputType) {
+    pub fn switch_input(&mut self, component: &'_ InputId, input_type: InputType) {
         let should_change_input =
             if let Some(exists_input) = self.input_id_to_input_type.get(&component.id) {
                 *exists_input == input_type
@@ -737,7 +813,7 @@ where
 
     pub fn to_handle(
         &self,
-        component: &'_ InputID,
+        component: &'_ InputId,
     ) -> Option<InputHandle<'_, BindingType, InputType>> {
         if let (Some(input_set), Some(input_type)) = (
             self.input_id_to_inputset.get(&component.id),
@@ -751,14 +827,14 @@ where
         None
     }
 
-    pub fn create_input_id(&mut self, input_type: InputType) -> InputID {
-        let component = InputID::default();
+    pub fn create_input_id(&mut self, input_type: InputType) -> InputId {
+        let component = InputId::default();
         self.switch_input(&component, input_type);
         component
     }
 
     #[allow(dead_code)]
-    pub fn stop_input_tracking(&mut self, component: &'_ InputID) {
+    pub fn stop_input_tracking(&mut self, component: &'_ InputId) {
         self.input_id_to_inputset.remove(&component.id);
         self.input_id_to_input_type.remove(&component.id);
     }
@@ -776,6 +852,12 @@ where
     #[allow(dead_code)]
     pub fn get_mouse_delta(&self) -> Option<Vec2> {
         self.mouse_delta
+    }
+
+    pub fn apply_config(&mut self, config: &InputConfig<BindingType>) {
+        for (_, set) in self.available_sets.iter_mut() {
+            set.apply_config(config);
+        }
     }
 }
 

@@ -1,17 +1,17 @@
 static mut NEXT_INPUT_INDEX: u8 = 0;
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct InputID {
+pub struct InputId {
     pub id: u8,
 }
 
-impl InputID {
+impl InputId {
     pub fn new(id: u8) -> Self {
         Self { id }
     }
 }
 
-impl Default for InputID {
+impl Default for InputId {
     fn default() -> Self {
         unsafe {
             let component = Self::new(NEXT_INPUT_INDEX);

@@ -37,6 +37,15 @@ enum HotkeysInput {
 
 ### Binding input
 ```rust
+let mut config: InputConfig<Bindings> = InputConfig::new();
+config.rebind_default_value(InputAxisType::KeyboardButton(KeyCode::S), -1.0);
+config.rebind_default_value(InputAxisType::KeyboardButton(KeyCode::A), -1.0);
+config.rebind_default_value(InputAxisType::KeyboardButton(KeyCode::Q), -1.0);
+config.rebind_default_value(
+    InputAxisType::GamepadButton(GamepadButtonType::LeftTrigger2),
+    -1.0,
+);
+
 let mut set = UserInputSet::new()
 
 set.begin_key(Bindings::Hotkeys(HotkeysInput::Test))
@@ -47,12 +56,14 @@ set.begin_key(Bindings::Hotkeys(HotkeysInput::Test))
     .enable_repeat_all_for_reactivation();
 
 set.begin_axis(Bindings::Movement(MovementInput::Forward))
-    .add(InputAxisType::KeyboardButton(KeyCode::W), Some(1.0))
-    .add(InputAxisType::KeyboardButton(KeyCode::S), Some(-1.0))
+    .add(InputAxisType::KeyboardButton(KeyCode::W))
+    .add(InputAxisType::KeyboardButton(KeyCode::S))
     .add(
         InputAxisType::GamepadAxis(GamepadAxisType::LeftStickY),
         None,
     );
+
+input_bindings.apply_config(&config);
 ```
 
 ### Spawn entity with InputID
