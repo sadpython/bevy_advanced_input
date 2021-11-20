@@ -79,7 +79,7 @@ fn spawn_player(
 }
 ```
 
-### Hanle input
+### Handle input
 ```rust
 fn process_player_input(
     input_bindings: Res<UserInputHandle<InputType, Bindings>>,
