@@ -1,7 +1,6 @@
 use std::hash::Hash;
 use std::marker::PhantomData;
-
-use super::{system::input_system, user_input::UserInputHandle};
+use crate::prelude::*;
 use bevy::prelude::*;
 
 pub struct InputBindingPlugin<InputType, KeyType>
@@ -36,7 +35,7 @@ where
             .add_system(
                 input_system::<InputType, KeyType>
                     .system()
-                    .label("raw_input"),
+                    .label(InputSystemLabels::RawInput),
             );
     }
 }

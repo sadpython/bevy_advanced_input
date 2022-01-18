@@ -10,7 +10,7 @@ use bevy::{
     window::CursorMoved,
 };
 
-use super::user_input::UserInputHandle;
+use crate::prelude::*;
 
 //TODO: add touch support with gestures
 #[allow(clippy::too_many_arguments)]
