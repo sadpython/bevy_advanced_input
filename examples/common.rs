@@ -38,7 +38,7 @@ enum HotkeysInput {
     Test,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
 struct Player {} //* Step 3: Just player placeholder, you could skip this
 
 #[derive(Bundle)]
@@ -51,7 +51,7 @@ struct PlayerBundle {
 struct MyInputConfig(InputConfig<Bindings>);
 
 fn main() {
-    App::build()
+    App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(InputBindingPlugin::<InputType, Bindings>::default()) //* Step 4: Add plugin with your InputType and BindingType
         .add_startup_system(setup_input.system().label("setup_inputs")) //* Step 5: Create setup input system
@@ -79,7 +79,7 @@ fn spawn_player(
 
 fn process_player_input(
     input_bindings: Res<UserInputHandle<InputType, Bindings>>,
-    query: Query<&InputId>,
+    mut query: Query<&InputId>,
 ) {
     //* If need to track last input type - use input_bindings.get_input_source()
     //* It could be Keyboard, Mouse or Gamepad now, and could be used for game widgets, when you want to add button icon to it
