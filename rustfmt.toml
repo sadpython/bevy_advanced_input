@@ -1,0 +1,10 @@
+# Bevy Advanced Input Plugin rustfmt configuration
+
+# Force 2018 edition, shadowing Cargo.toml
+edition = "2018"
+
+# Force 4 space tabs
+tab_spaces = 4
+
+# Prevent carriage returns
+newline_style = "Unix"
