@@ -1,11 +1,5 @@
-use bevy::prelude::*;
-
-use bevy_advanced_input::{
-    config::InputConfig,
-    input_id::InputId,
-    plugin::InputBindingPlugin,
-    user_input::{InputAxisType, MouseAxisType, UserInputHandle, UserInputSet},
-};
+use bevy::{input::ElementState, prelude::*};
+use bevy_advanced_input::prelude::*;
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy)] //* Step 1: create input states for your game
 enum InputType {
@@ -38,7 +32,7 @@ enum HotkeysInput {
     Test,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
 struct Player {} //* Step 3: Just player placeholder, you could skip this
 
 #[derive(Bundle)]
@@ -47,20 +41,24 @@ struct PlayerBundle {
     player: Player,
     input_id: InputId,
 }
-//* Step 3.2: Create player config struct with your bindings
-struct MyInputConfig(InputConfig<Bindings>);
+
+#[derive(SystemLabel, Clone, Hash, Debug, PartialEq, Eq)]
+enum Labels {
+    SetupInputs,
+    SpawnPlayer,
+    Input,
+}
 
 fn main() {
-    App::build()
+    App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(InputBindingPlugin::<InputType, Bindings>::default()) //* Step 4: Add plugin with your InputType and BindingType
-        .add_startup_system(setup_input.system().label("setup_inputs")) //* Step 5: Create setup input system
-        .add_startup_system(spawn_player.system().label("spawn_player")) //* Step 6: Spawn player
+        .add_startup_system(setup_input.label(Labels::SetupInputs)) //* Step 5: Create setup input system
+        .add_startup_system(spawn_player.label(Labels::SpawnPlayer)) //* Step 6: Spawn player
         .add_system(
             process_player_input
-                .system()
-                .after("raw_input")
-                .label("input"),
+                .after(InputSystemLabels::RawInput)
+                .label(Labels::Input),
         ) //* Step 7: create process input system, it must be runned after out "raw_input" system
         .run();
 }
@@ -79,7 +77,7 @@ fn spawn_player(
 
 fn process_player_input(
     input_bindings: Res<UserInputHandle<InputType, Bindings>>,
-    query: Query<&InputId>,
+    mut query: Query<&InputId>,
 ) {
     //* If need to track last input type - use input_bindings.get_input_source()
     //* It could be Keyboard, Mouse or Gamepad now, and could be used for game widgets, when you want to add button icon to it
@@ -92,20 +90,34 @@ fn process_player_input(
             //* If you need mouse position or delta(last frame) call input_bindings.get_mouse_postion() or input_bindings.get_mouse_delta()
             if let Some(value) =
                 input_handle.get_axis_value(Bindings::Movement(MovementInput::Right))
-            {}
+            {
+                println!("Bindings::Movement(MovementInput::Right) -> {}", value);
+            }
             if let Some(value) = input_handle.get_axis_value(Bindings::Movement(MovementInput::Up))
             {
+                println!("Bindings::Movement(MovementInput::Up) -> {}", value);
             }
 
             if let Some(value) =
                 input_handle.get_axis_value(Bindings::Movement(MovementInput::Forward))
             {
+                println!("Bindings::Movement(MovementInput::Forward) -> {}", value);
             }
 
-            if let Some(value) = input_handle.get_axis_value(Bindings::Camera(CameraInput::Yaw)) {}
+            if let Some(value) = input_handle.get_axis_value(Bindings::Camera(CameraInput::Yaw)) {
+                println!("Bindings::Camera(CameraInput::Yaw) -> {}", value);
+            }
             if let Some(value) = input_handle.get_axis_value(Bindings::Camera(CameraInput::Pitch)) {
+                println!("Bindings::Camera(CameraInput::Pitch) -> {}", value);
             }
             if let Some(value) = input_handle.get_key_state(Bindings::Hotkeys(HotkeysInput::Test)) {
+                println!(
+                    "Bindings::Hotkeys(HotkeysInput::Test) -> {}",
+                    match value {
+                        ElementState::Pressed => "Pressed",
+                        ElementState::Released => "Released",
+                    }
+                );
             }
         }
     });

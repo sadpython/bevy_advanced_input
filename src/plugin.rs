@@ -1,9 +1,8 @@
 use std::hash::Hash;
 use std::marker::PhantomData;
+use crate::prelude::*;
+use bevy::prelude::*;
 
-use super::{system::input_system, user_input::UserInputHandle};
-use bevy::prelude::Plugin;
-use bevy::prelude::{IntoSystem, ParallelSystemDescriptorCoercion};
 pub struct InputBindingPlugin<InputType, KeyType>
 where
     InputType: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
@@ -31,12 +30,12 @@ where
     InputType: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
     KeyType: PartialEq + Eq + Hash + Copy + Clone + Send + Sync,
 {
-    fn build(&self, app: &mut bevy::prelude::AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.init_resource::<UserInputHandle<InputType, KeyType>>()
             .add_system(
                 input_system::<InputType, KeyType>
                     .system()
-                    .label("raw_input"),
+                    .label(InputSystemLabels::RawInput),
             );
     }
 }

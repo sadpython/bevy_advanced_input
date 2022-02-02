@@ -1,6 +1,8 @@
+use bevy::prelude::Component;
+
 static mut NEXT_INPUT_INDEX: u8 = 0;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Component)]
 pub struct InputId {
     pub id: u8,
 }
